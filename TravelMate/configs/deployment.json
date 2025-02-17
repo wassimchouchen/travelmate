@@ -1,11 +1,28 @@
+
 [
     {
         "name": "deployment_1",
-        "module": {"name": "TravelMate"},
-        "node": {"ip": "localhost"},
+        "description": "TravelMate agent deployment configuration",
+        "module": {
+            "name": "TravelMate",
+            "description": "An AI travel assistant agent that helps plan trips and travel itineraries",
+            "parameters": "{tool_name: str, tool_input_data: {origin: str, cities: str, date_range: str, interests: str}}",
+            "module_type": "agent",
+            "module_version": "v0.1",
+            "module_entrypoint": "run.py",
+            "execution_type": "package"
+        },
+        "node": {
+            "ip": "localhost"
+        },
         "config": {
             "config_name": "config_1",
-            "llm_config": {"config_name": "model_2"},
+            "llm_config": {
+                "config_name": "model_2",
+                "model_name": "gpt-4",
+                "temperature": 0.7,
+                "max_tokens": 1000
+            },
             "system_prompt": {
                 "role": "You are a helpful AI assistant.",
                 "persona": ""
