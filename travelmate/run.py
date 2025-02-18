@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 import logging
 from typing import Dict
 from naptha_sdk.schemas import AgentRunInput
-from schemas import InputSchema, TripPlannerInput
+from travelmate.schemas import InputSchema, TripPlannerInput
 from naptha_sdk.user import sign_consumer_id, get_private_key_from_pem
 from crewai import Crew, Agent, Task, LLM
 from crewai_tools import FirecrawlSearchTool
