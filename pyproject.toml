@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "A travel planning assistant agent"
 authors = ["Wassim Chouchenne <wassimchouchenn@gmail.com>"]
 readme = "README.md"
+packages = [{include = "TravelMate"}] 
 
 [tool.poetry.dependencies]
 python = ">=3.10,<=3.13"
