@@ -8,7 +8,7 @@
             "description": "An AI travel agent that helps plan trips and travel itineraries!",
             "parameters": "{tool_name: str, tool_input_data: {origin: str, cities: str, date_range: str, interests: str}}",
             "module_type": "agent",
-            "module_version": "v0.3",
+            "module_version": "v0.4",
             "module_entrypoint": "run.py",
             "execution_type": "package"
         },

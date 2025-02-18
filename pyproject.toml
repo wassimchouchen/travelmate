@@ -5,7 +5,7 @@ description = "A travel planning assistant agent"
 authors = ["Wassim Chouchenne <wassimchouchenn@gmail.com>"]
 readme = "README.md"
 packages = [
-    {include = "keynesian_beauty_contest", from="."}
+    {include = "travelmate", from="."}
 ]
 [tool.poetry.dependencies]
 python = ">=3.10,<=3.13"
