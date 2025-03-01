@@ -19,18 +19,15 @@ from naptha_sdk.configs import setup_module_deployment
 load_dotenv()
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-
 class TripPlannerModule:
     def __init__(self, module_run):
         self.module_run = module_run
         self.llm = LLM(
-                model="gpt-4o-mini",
-                temperature=0.8,
- 
+            model="gpt-4o-mini",
+            temperature=0.8,
         )
         
     def plan_trip(self, input_data: TripPlannerInput):
-        
         try:
             logger.debug("Initializing trip planning...")
             
@@ -70,30 +67,32 @@ class TripPlannerModule:
             
         except Exception as e:
             logger.error(f"Error in trip planning: {e}")
-  
             raise
-
-
-
 
 original_load_llm_configs = configs.load_llm_configs
 
 def patched_load_llm_configs(config_path):
     actual_path = str(Path(__file__).parent / "configs" / "llm_configs.json")
     return original_load_llm_configs(actual_path)
+
 configs.load_llm_configs = patched_load_llm_configs
 
 def run(module_run: Dict):
     """Entry point for the module"""
-    module_run = AgentRunInput(**module_run)
-    module_run.inputs = InputSchema(**module_run.inputs)
+    if "agent_run_input" not in module_run:
+        module_run["agent_run_input"] = module_run.get("inputs", {})
     
-    if isinstance(module_run.inputs.tool_input_data, dict):
-        module_run.inputs.tool_input_data = TripPlannerInput(**module_run.inputs.tool_input_data)
+    module_run = AgentRunInput(**module_run)
+    module_run.agent_run_input = InputSchema(**module_run.agent_run_input)
+    
+    if isinstance(module_run.agent_run_input.tool_input_data, dict):
+        module_run.agent_run_input.tool_input_data = TripPlannerInput(
+            **module_run.agent_run_input.tool_input_data
+        )
     
     planner = TripPlannerModule(module_run)
-    method = getattr(planner, module_run.inputs.tool_name)
-    return method(module_run.inputs.tool_input_data)
+    method = getattr(planner, module_run.agent_run_input.tool_name)
+    return method(module_run.agent_run_input.tool_input_data)
 
 if __name__ == "__main__":
     import asyncio
@@ -119,7 +118,7 @@ if __name__ == "__main__":
     }
     
     module_run = {
-        "inputs": input_params,
+        "inputs": input_params,  
         "deployment": deployment,
         "consumer_id": naptha.user.id,
         "signature": sign_consumer_id(naptha.user.id, os.getenv("PRIVATE_KEY"))
@@ -127,4 +126,3 @@ if __name__ == "__main__":
     
     response = run(module_run)
     print("Voyage Plan:", response)
-
