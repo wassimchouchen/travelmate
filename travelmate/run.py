@@ -4,9 +4,13 @@ from typing import Dict
 from naptha_sdk.schemas import AgentRunInput
 from travelmate.schemas import InputSchema, TripPlannerInput
 from naptha_sdk.user import sign_consumer_id, get_private_key_from_pem
-from crewai import Crew, LLM
+from crewai import Crew, Agent, Task, LLM
+from crewai_tools import FirecrawlSearchTool
+from textwrap import dedent
+import os
 from dev.agents import TravelAdvisors
 from dev.tasks import TripTasks
+import os
 from pathlib import Path
 from naptha_sdk import configs 
 from naptha_sdk.client.naptha import Naptha
@@ -20,13 +24,16 @@ class TripPlannerModule:
     def __init__(self, module_run):
         self.module_run = module_run
         self.llm = LLM(
-            model="gpt-4o-mini",
-            temperature=0.8,
+                model="gpt-4o-mini",
+                temperature=0.8,
+ 
         )
         
     def plan_trip(self, input_data: TripPlannerInput):
+        
         try:
             logger.debug("Initializing trip planning...")
+            
             agents = TravelAdvisors()
             tasks = TripTasks()
             destination_curator = agents.destination_curator()
@@ -63,23 +70,30 @@ class TripPlannerModule:
             
         except Exception as e:
             logger.error(f"Error in trip planning: {e}")
+  
             raise
 
+
+
+
+original_load_llm_configs = configs.load_llm_configs
+
+def patched_load_llm_configs(config_path):
+    actual_path = str(Path(__file__).parent / "configs" / "llm_configs.json")
+    return original_load_llm_configs(actual_path)
+configs.load_llm_configs = patched_load_llm_configs
+
 def run(module_run: Dict):
-    """Entry point for the module.
-       This version expects the caller to supply an 'agent_run_input' key.
-    """
+    """Entry point for the module"""
     module_run = AgentRunInput(**module_run)
-    module_run.agent_run_input = InputSchema(**module_run.agent_run_input)
+    module_run.inputs = InputSchema(**module_run.inputs)
     
-    if isinstance(module_run.agent_run_input.tool_input_data, dict):
-        module_run.agent_run_input.tool_input_data = TripPlannerInput(
-            **module_run.agent_run_input.tool_input_data
-        )
+    if isinstance(module_run.inputs.tool_input_data, dict):
+        module_run.inputs.tool_input_data = TripPlannerInput(**module_run.inputs.tool_input_data)
     
     planner = TripPlannerModule(module_run)
-    method = getattr(planner, module_run.agent_run_input.tool_name)
-    return method(module_run.agent_run_input.tool_input_data)
+    method = getattr(planner, module_run.inputs.tool_name)
+    return method(module_run.inputs.tool_input_data)
 
 if __name__ == "__main__":
     import asyncio
@@ -95,19 +109,17 @@ if __name__ == "__main__":
         )
     )
     input_params = {
-        "agent_run_input": { 
-            "tool_name": "plan_trip",
-            "tool_input_data": {
-                "origin": "New York",
-                "cities": "Paris, London, Rome",
-                "date_range": "June 2024",
-                "interests": "art, history, food"
-            }
+        "tool_name": "plan_trip",
+        "tool_input_data": {
+            "origin": "New York",
+            "cities": "Paris, London, Rome",
+            "date_range": "June 2024",
+            "interests": "art, history, food"
         }
     }
     
     module_run = {
-        "inputs": input_params,  
+        "inputs": input_params,
         "deployment": deployment,
         "consumer_id": naptha.user.id,
         "signature": sign_consumer_id(naptha.user.id, os.getenv("PRIVATE_KEY"))
