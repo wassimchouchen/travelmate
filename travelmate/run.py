@@ -4,13 +4,9 @@ from typing import Dict
 from naptha_sdk.schemas import AgentRunInput
 from travelmate.schemas import InputSchema, TripPlannerInput
 from naptha_sdk.user import sign_consumer_id, get_private_key_from_pem
-from crewai import Crew, Agent, Task, LLM
-from crewai_tools import FirecrawlSearchTool
-from textwrap import dedent
-import os
+from crewai import Crew, LLM
 from dev.agents import TravelAdvisors
 from dev.tasks import TripTasks
-import os
 from pathlib import Path
 from naptha_sdk import configs 
 from naptha_sdk.client.naptha import Naptha
@@ -19,6 +15,7 @@ from naptha_sdk.configs import setup_module_deployment
 load_dotenv()
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
 class TripPlannerModule:
     def __init__(self, module_run):
         self.module_run = module_run
@@ -30,7 +27,6 @@ class TripPlannerModule:
     def plan_trip(self, input_data: TripPlannerInput):
         try:
             logger.debug("Initializing trip planning...")
-            
             agents = TravelAdvisors()
             tasks = TripTasks()
             destination_curator = agents.destination_curator()
@@ -69,21 +65,10 @@ class TripPlannerModule:
             logger.error(f"Error in trip planning: {e}")
             raise
 
-original_load_llm_configs = configs.load_llm_configs
-
-def patched_load_llm_configs(config_path):
-    actual_path = str(Path(__file__).parent / "configs" / "llm_configs.json")
-    return original_load_llm_configs(actual_path)
-
-configs.load_llm_configs = patched_load_llm_configs
-
 def run(module_run: Dict):
-    """Entry point for the module"""
-    if "agent_run_input" not in module_run:
-        module_run["agent_run_input"] = module_run.get("inputs", {})
-        del module_run["inputs"] 
-
-    
+    """Entry point for the module.
+       This version expects the caller to supply an 'agent_run_input' key.
+    """
     module_run = AgentRunInput(**module_run)
     module_run.agent_run_input = InputSchema(**module_run.agent_run_input)
     
@@ -110,12 +95,14 @@ if __name__ == "__main__":
         )
     )
     input_params = {
-        "tool_name": "plan_trip",
-        "tool_input_data": {
-            "origin": "New York",
-            "cities": "Paris, London, Rome",
-            "date_range": "June 2024",
-            "interests": "art, history, food"
+        "agent_run_input": { 
+            "tool_name": "plan_trip",
+            "tool_input_data": {
+                "origin": "New York",
+                "cities": "Paris, London, Rome",
+                "date_range": "June 2024",
+                "interests": "art, history, food"
+            }
         }
     }
     
