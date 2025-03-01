@@ -81,6 +81,8 @@ def run(module_run: Dict):
     """Entry point for the module"""
     if "agent_run_input" not in module_run:
         module_run["agent_run_input"] = module_run.get("inputs", {})
+        del module_run["inputs"] 
+
     
     module_run = AgentRunInput(**module_run)
     module_run.agent_run_input = InputSchema(**module_run.agent_run_input)
