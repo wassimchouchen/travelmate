@@ -8,8 +8,8 @@ from crewai import Crew, Agent, Task, LLM
 from crewai_tools import FirecrawlSearchTool
 from textwrap import dedent
 import os
-from dev.agents import TravelAdvisors
-from dev.tasks import TripTasks
+from .agents import TravelAdvisors
+from .tasks import TripTasks
 import os
 from pathlib import Path
 from naptha_sdk import configs 
